@@ -1,0 +1,50 @@
+.srm-page-tagger-popout {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  background-color: #3a3a3a;
+  color: #eee;
+  transition: visibility 200ms, opacity 200ms;
+}
+
+.srm-page-tagger-popout.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.srm-page-tagger-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  background-color: #3a3a3a;
+  color: #eee;
+  transition: visibility 200ms, opacity 200ms;
+}
+
+.srm-page-tagger-tooltip.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+
+.srm-page-tagger-popout ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.srm-page-tagger-popout ul .srm-tagger-result-item {
+  margin: 0;
+  padding: 0.25em 0.5em;
+}
+
+.srm-page-tagger-anchor {
+  background-color: yellow;
+  position: relative;
+}
+
+.srm-page-tagged {
+  background-color: pink;
+  position: relative;
+}
