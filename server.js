@@ -7,3 +7,10 @@ require('http').createServer(function (request, response) {
       file.serve(request, response);
     }).resume();
 }).listen(3005);
+
+
+// var http = require('http');
+//
+// var server = http.createServer(function (req, res) {
+//
+// });

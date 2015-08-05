@@ -31,11 +31,10 @@ Concepts:
     var boundKeyUp = _keyup.bind(this);
     var boundKeyDown = _keydown.bind(this);
     var positioning =  watchElement.style.position;
-    this.isContentEditable =  watchElement.getAttribute('contenteditable')
+    this.isTextArea = watchElement.tagName.toLowerCase() === 'textarea';
+    this.isContentEditable =  !this.isTextArea && watchElement.contentEditable;
 
-    if (this.isContentEditable && !positioning) {
-      watchElement.style.position = 'relative';
-    }
+    if (!this.isTextArea && !this.isContentEditable) {return}
 
     //this.cursor = {node: {}, offset: null}
     this.tempCache = {}; //Object.create(null);
@@ -45,7 +44,6 @@ Concepts:
     this.currentAnchor;
     this.currentTag;
     this.element = watchElement;
-    this.tree = document.createTreeWalker(watchElement, NodeFilter.SHOW_TEXT, null, false);
 
     this.eventTunnel = {callback:_popoutCallback.bind(this)}; //for the template to communicate back with this
     this.popout = new Views.PopoutView({el: watchElement, eventTunnel: this.eventTunnel});
@@ -54,7 +52,14 @@ Concepts:
 
     //console.log("ELEMENT", watchElement, this);
     this.element.addEventListener('keyup', boundKeyUp, false);
-    this.element.addEventListener('keydown', boundKeyDown, false); //primarily to prevent <div> tags on Enter
+
+    //different things for Content Editable
+    if (this.isContentEditable) {
+      if (!positioning) {watchElement.style.position = 'relative';}
+      this.element.addEventListener('keydown', boundKeyDown, false); //primarily to prevent <div> tags on Enter
+      this.tree = document.createTreeWalker(watchElement, NodeFilter.SHOW_TEXT, null, false);
+    }
+
   };
 
   _fbPageTaggerConstructor.prototype.hideAll = function () {
@@ -63,8 +68,8 @@ Concepts:
   }
 
   _fbPageTaggerConstructor.prototype.blockKeyUp = function (bool) {
-    this.element.setAttribute('disabled', bool);
-    this.element.setAttribute('contenteditable', !bool);
+    if (this.isTextarea) { this.element.setAttribute('disabled', bool); }
+    if (this.isContentEditable) { this.element.setAttribute('contenteditable', !bool); }
   }
 
   _fbPageTaggerConstructor.prototype.injectTaggedPage = function (pageID, anchorID, text) {
@@ -119,12 +124,16 @@ Concepts:
     var anchorMatches = text.match(_searchText);
     var taggedMatches = text.match(_taggedText);
 
-    //split the nodes.  Do this no matter what.
-    if (evt.keyIdentifier === "U+0020") { _splitText.call(this, this.tree.root.textContent); }
+    //split the nodes. or set the ranges. Do this no matter what.
+    if (evt.keyIdentifier === "U+0020") {
+      if (this.isTextArea) { _setRanges.call(this, this.element); }
+      if (this.isContentEditable) { _splitText.call(this, this.tree.root.textContent); }
+    }
+
     if (!anchorMatches && !taggedMatches)  {return}
 
     this.blockKeyUp(true);
-    _setAnchors.call(this);
+    if (this.isContentEditable) { _setAnchors.call(this); }
     // if the cursor is inside an anchor or tag, the popup/tooltip will show up.
     //if it crossed out of one it will hide the popup/tooltip
     if (this.currentAnchor) {
@@ -144,8 +153,8 @@ Concepts:
   }
 
   var _search = function (str) {
-    return fakeData.filter(function (item) {
-      var pageName = item['pageName'].toLowerCase();
+    return fakeData.items.filter(function (item) {
+      var pageName = item['name'].toLowerCase();
       var index = pageName.indexOf(str);
       return index >= 0;
     });
@@ -159,6 +168,7 @@ Concepts:
     this.hideAll();
   }
 
+  //for contentEditable
   var _setAnchors = function () {
       //isAnchorSet: if the previous node is a <span> of a specific type. I may change to <em>
       var cursor = _getCurrentCursorOffset();
@@ -207,6 +217,12 @@ Concepts:
       if (!isAnchor) {
         this.currentAnchor = null;
       }
+  }
+
+  //for textarea
+  var _setRanges = function (element) {
+    var selection =_getSelection()
+    console.log("setting ranges for element", selection.focusNode, element.selectionStart, element)
   }
 
   var _setTagAnchor = function (text) {

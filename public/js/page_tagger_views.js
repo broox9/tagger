@@ -14,7 +14,7 @@
   // The View
   var PopoutView = Backbone.View.extend({
     className: 'srm-page-tagger-popout',
-    template: _.template('<ul><% for(i=0;i<items.length;i++){ %> <li class="srm-tagger-result-item" data-page-id="<%= items[i].id %>"><%= items[i].pageName %></li> <% } %></ul>'),
+    template: _.template('<ul><% for(i=0;i<items.length;i++){ %> <li class="srm-tagger-result-item" data-page-id="<%= items[i].id %>"><%= items[i].name %></li> <% } %></ul>'),
 
     delegateEvents: function () {
       $(this.wrapper).on('click', '.srm-tagger-result-item',  this.handleSelectTag);
@@ -33,15 +33,15 @@
       this.render();
     },
 
-    getInputBounds: function () {
-      var el = this.el;
-      return {
-        top: el.offsetTop,
-        left: el.offsetLeft,
-        height: el.offsetHeight,
-        width: el.offsetWidth
-      }
-    },
+    // getInputBounds: function () {
+    //   var el = this.el;
+    //   return {
+    //     top: el.offsetTop,
+    //     left: el.offsetLeft,
+    //     height: el.offsetHeight,
+    //     width: el.offsetWidth
+    //   }
+    // },
 
     preRender: function () {
         this.wrapper = document.createElement('div');
@@ -52,7 +52,7 @@
 
     render: function (data) {
       this.currentData = data;
-      var items = (data)? {items: data} : {items: [{id: '', pageName:''}]};
+      var items = (data)? {items: data} : {items: [{id: '', name:''}]};
       var html = this.template(items);
 
       this.wrapper.innerHTML = html;
@@ -64,9 +64,13 @@
       range.selectNode(element);
       var bounds = range.getClientRects()[0];
       var el_bound = element.getBoundingClientRect();
-      var top = this.inputBounds.top; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
-      var left = this.inputBounds.width; //(element.offsetLeft)
+      var top = this.inputBounds.top; //+ element.offsetTop + element.offsetHeight; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
 
+      //this.el.style.display = 'inline-block';
+      var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
+
+
+      console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
 
       this.wrapper.style.top = top +  'px'; //TODO: switch 22 to line-height
       this.wrapper.style.left = left + 'px';
