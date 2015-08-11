@@ -16,13 +16,13 @@
 
 <body>
   <div id="container">
-    <fieldset>
+    <!-- fieldset>
       <h3> Text Area </h3>
       <textarea id="post-contents-text"></textarea>
     </fieldset>
 
 
-    <br><br><br><br><!--br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br> <br><br><br><br><br><br -->
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br> <br><br><br><br><br><br -->
 
     <fieldset>
       <h3> Content Editable </h3>
@@ -38,10 +38,9 @@
  Scope.editable = document.getElementById('post-contents-edit');
 
  var pt = SRM.widgets.FacebookPageTagger.init(Scope, Scope.editable)
- var pt2 = SRM.widgets.FacebookPageTagger.init(Scope, Scope.textarea)
+ //var pt2 = SRM.widgets.FacebookPageTagger.init(Scope, Scope.textarea)
 
  console.log("Scope", Scope, pt);
-
 
 </script>
 </html>

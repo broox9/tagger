@@ -31,4 +31,5 @@ textarea, [contenteditable="true"] {
   height: 6em;
   width: 35em;
   font-size: .75em;
+  outline: none;
 }

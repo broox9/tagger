@@ -15,7 +15,7 @@ Concepts:
 
 
 /* ===================== Controller MODULE ================================== */
-(function (exports, Views, fakeData) {
+(function (exports, Views, $) {
   'use-strict';
 
   var anchorClassName = 'srm-page-tagger-anchor';
@@ -24,7 +24,6 @@ Concepts:
   var _taggedText = /\B@\[[0-9]{5,}\]/gi
   var _spaceRegex = /\s/; // \u0200
   //var _atSymbolRegex = /\B\u0040/; // \B@
-  //var keytimer;
 
   /* = Constructor ---------------------------------------------------------- */
   var _fbPageTaggerConstructor = function (watchElement, outputElement) {
@@ -36,7 +35,6 @@ Concepts:
 
     if (!this.isTextArea && !this.isContentEditable) {return}
 
-    //this.cursor = {node: {}, offset: null}
     this.tempCache = {}; //Object.create(null);
     this.taggedCache = {}
 
@@ -49,11 +47,10 @@ Concepts:
     this.popout = new Views.PopoutView({el: watchElement, eventTunnel: this.eventTunnel});
     this.tooltip = new Views.TooltipView({el: this.popout.wrapper, popoutEl: watchElement});
 
-
-    //console.log("ELEMENT", watchElement, this);
+    /* Key Up events  */
     this.element.addEventListener('keyup', boundKeyUp, false);
 
-    //different things for Content Editable
+    /* different things for Content Editable */
     if (this.isContentEditable) {
       if (!positioning) {watchElement.style.position = 'relative';}
       this.element.addEventListener('keydown', boundKeyDown, false); //primarily to prevent <div> tags on Enter
@@ -91,7 +88,7 @@ Concepts:
     sibling.textContent = '\u00A0';
     this.element.insertBefore(spaceNode, node);
 
-    //set ranges for selection
+    /* set ranges for selection */
     selection.removeAllRanges();
 
     if (sibling.nextSibling) {
@@ -107,7 +104,7 @@ Concepts:
 
   /* = Utility Stuff -------------------------------------------------------- */
   var _keydown = function (evt) {
-      //override <div> being created
+      /* override <div> being created */
       if (evt.keyCode === 13) {
         evt.preventDefault();
         document.execCommand('insertHTML', false, '<br/><br/>'); //won't work in IE.  IE is just weird
@@ -117,16 +114,15 @@ Concepts:
 
 
   var _keyup = function (evt) {
-    //clearTimeout(keytimer);
     //console.log(evt.keyCode)
     var text = (!!evt.target.value)? evt.target.value : evt.target.textContent;
     var target = evt.target;
     var anchorMatches = text.match(_searchText);
     var taggedMatches = text.match(_taggedText);
 
-    //split the nodes. or set the ranges. Do this no matter what.
+    /* split the nodes. or set the ranges. Do this no matter what. */
     if (evt.keyIdentifier === "U+0020") {
-      if (this.isTextArea) { _setRanges.call(this, this.element); }
+      //if (this.isTextArea) { _setRanges.call(this, this.element); }
       if (this.isContentEditable) { _splitText.call(this, this.tree.root.textContent); }
     }
 
@@ -134,11 +130,24 @@ Concepts:
 
     this.blockKeyUp(true);
     if (this.isContentEditable) { _setAnchors.call(this); }
-    // if the cursor is inside an anchor or tag, the popup/tooltip will show up.
-    //if it crossed out of one it will hide the popup/tooltip
+
+    /*
+      if the cursor is inside an anchor or tag, the popup/tooltip will show up.
+      if it crossed out of one it will hide the popup/tooltip
+    */
     if (this.currentAnchor) {
-      var data = _search(this.currentAnchor.search);
-      this.popout.update(data, this.currentAnchor);
+      this.popout.showLoading();
+      this.popout.show();
+
+      /* search set's the this.xhr object which is referenced below */
+      _search.call(this,this.currentAnchor.search);
+
+      var self = this;
+      $.when( this.xhr ).then(function (data, status, jqXHR) {
+        self.popout.update(data, self.currentAnchor);
+        self.popout.hideLoading();
+      });
+
     } else {
       this.popout.hide();
     }
@@ -149,15 +158,13 @@ Concepts:
       this.tooltip.hide();
     }
     this.blockKeyUp(false);
-    //keytimer = setTimeout(function () {_paused() }, 500);
   }
 
   var _search = function (str) {
-    return fakeData.items.filter(function (item) {
-      var pageName = item['name'].toLowerCase();
-      var index = pageName.indexOf(str);
-      return index >= 0;
-    });
+    console.dir(this.tree.root.firstChild);
+    if (this.xhr) {  this.xhr.abort(); /*console.log("abort mission")*/}
+    this.xhr = $.getJSON('/tagger', {q: str})
+    return this.xhr;
   }
 
   var _splitText = function (text) {
@@ -220,10 +227,9 @@ Concepts:
   }
 
   //for textarea
-  var _setRanges = function (element) {
-    var selection =_getSelection()
-    console.log("setting ranges for element", selection.focusNode, element.selectionStart, element)
-  }
+  // var _setRanges = function (element) {
+  //   var selection =_getSelection()
+  // }
 
   var _setTagAnchor = function (text) {
     var identifier = /\d+/.exec(text)[0];
@@ -260,4 +266,4 @@ Concepts:
   }
 
   return exports;
-})(SRM.widgets.FacebookPageTagger = {}, SRM.widgets.FacebookPageTaggerViews, fakeData);
+})(SRM.widgets.FacebookPageTagger = {}, SRM.widgets.FacebookPageTaggerViews, jQuery);

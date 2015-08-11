@@ -5,5 +5,8 @@
   "devDependencies": {
     "http-server": "^0.8.0",
     "node-static": "^0.7.7"
+  },
+  "dependencies": {
+    "express": "^4.13.3"
   }
 }

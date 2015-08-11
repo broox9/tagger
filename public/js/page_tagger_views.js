@@ -4,6 +4,7 @@
 
   function _getInputBounds (element) {;
     return {
+      styles: window.getComputedStyle(element),
       top: element.offsetTop,
       left: element.offsetLeft,
       height: element.offsetHeight,
@@ -22,59 +23,67 @@
     },
 
     initialize: function (opts) {
-      //console.log("temp init", this)
       _.bindAll(this, 'handleSelectTag');
       this.eventTunnel = this.options.eventTunnel;
       this.isActive = false;
       this.currentAnchor;
       this.currentData;
       this.inputBounds = _getInputBounds(this.el);
+      this.paddingTotal = parseFloat(this.inputBounds.styles.paddingLeft) + parseFloat(this.inputBounds.styles.paddingRight);
       this.preRender();
-      this.render();
-    },
+      this.setPosition();
+      //this.render();
 
-    // getInputBounds: function () {
-    //   var el = this.el;
-    //   return {
-    //     top: el.offsetTop,
-    //     left: el.offsetLeft,
-    //     height: el.offsetHeight,
-    //     width: el.offsetWidth
-    //   }
-    // },
+      this.loaderElement = this.wrapper.querySelector('.srm-tagger-searching')
+    },
 
     preRender: function () {
         this.wrapper = document.createElement('div');
         this.wrapper.className = this.className;
         var insertTarget = this.el.nextSibling;
+        var searchDiv = '<div class="srm-tagger-searching">searching...</div>';
+        var resultsDiv =  '<div class="srm-tagger-results"></div>';
+
+        this.wrapper.innerHTML = searchDiv + resultsDiv;
+        this.resultsList = this.wrapper.querySelector('.srm-tagger-results')
+
         this.el.parentElement.insertBefore(this.wrapper, insertTarget);
     },
 
     render: function (data) {
       this.currentData = data;
-      var items = (data)? {items: data} : {items: [{id: '', name:''}]};
-      var html = this.template(items);
+      var html;
 
-      this.wrapper.innerHTML = html;
+      if (!data) {
+        html = '<ul><li class="srm-tagger-no-results">No results</li></ul>';
+      } else {
+        if (data.items.length == 0) {
+          html = '<ul><li class="srm-tagger-no-results">No results</li></ul>';
+        } else {
+          html = this.template(data);
+        }
+      }
+
+      this.resultsList.innerHTML = html;
+      this.show();
       return this;
     },
 
     setPosition: function (element) {
-      var range = document.createRange();
-      range.selectNode(element);
-      var bounds = range.getClientRects()[0];
-      var el_bound = element.getBoundingClientRect();
-      var top = this.inputBounds.top; //+ element.offsetTop + element.offsetHeight; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
+      // var range = document.createRange();
+      // range.selectNode(element);
+      // var bounds = range.getClientRects()[0];
+      // var el_bound = element.getBoundingClientRect();
+      // var top = this.inputBounds.top; //+ element.offsetTop + element.offsetHeight; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
+      //
+      // //this.el.style.display = 'inline-block';
+      // var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
+      // console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
 
-      //this.el.style.display = 'inline-block';
-      var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
-
-
-      console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
-
-      this.wrapper.style.top = top +  'px'; //TODO: switch 22 to line-height
-      this.wrapper.style.left = left + 'px';
-      this.show();
+      console.log("set position" , this.paddingTotal)
+      this.wrapper.style.top = this.el.offsetTop +  'px';
+      this.wrapper.style.left = (this.el.offsetWidth + this.paddingTotal) + 'px';
+      //this.show();
     },
 
     show: function () {
@@ -88,7 +97,7 @@
     },
 
     update: function (data, anchor) {
-      this.setPosition(anchor.node)
+      //this.setPosition(anchor.node)
       this.render(data);
       this.currentAnchor = anchor
     },
@@ -98,6 +107,14 @@
       var pageID = $(evt.target).data('page-id');
       var text = evt.target.textContent;
       this.eventTunnel.callback(pageID, this.currentAnchor, text, index);
+    },
+
+    showLoading: function () {
+      $(this.loaderElement).addClass('active')
+    },
+
+    hideLoading: function () {
+      $(this.loaderElement).removeClass('active')
     }
   });
 
@@ -111,9 +128,11 @@
     template: _.template('<strong><%= text %></strong>'),
 
     initialize: function (options) {
-      console.log("Tooltip", this)
+      console.log("Tooltip", this);
+      this.popoutEl = options.popoutEl;
       this.preRender();
       this.inputBounds = _getInputBounds(options.popoutEl);
+      this.paddingTotal = parseFloat(this.inputBounds.styles.paddingLeft) + parseFloat(this.inputBounds.styles.paddingRight);
     },
 
     preRender: function () {
@@ -138,18 +157,20 @@
     },
 
     setPosition: function (element) {
-      console.log("set position", element)
-      var range = document.createRange();
-      range.selectNode(element);
-      var bounds = range.getClientRects()[0];
-      var el_bound = element.getBoundingClientRect();
-      var top = this.inputBounds.top; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
-      var left = this.inputBounds.width; //(element.offsetLeft)
+      // var range = document.createRange();
+      // range.selectNode(element);
+      // var bounds = range.getClientRects()[0];
+      // var el_bound = element.getBoundingClientRect();
+      // var top = this.inputBounds.top; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
+      // var left = this.inputBounds.width; //(element.offsetLeft)
+      //
+      // this.wrapper.style.top = top +  'px'; //TODO: switch 22 to line-height
+      // this.wrapper.style.left = left + 'px';
+      // this.show();
 
-
-      this.wrapper.style.top = top +  'px'; //TODO: switch 22 to line-height
-      this.wrapper.style.left = left + 'px';
-      this.show();
+      console.log("set position" , this)
+      this.wrapper.style.top = (this.el.offsetTop) + 'px';
+      this.wrapper.style.left = (this.popoutEl.offsetWidth + this.paddingTotal) + 'px';
     },
 
     show: function () {
