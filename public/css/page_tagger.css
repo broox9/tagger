@@ -40,9 +40,21 @@
 }
 
 @keyframes rotatify {
-  0%   {-webkit-transform: rotate(0deg);}
-  20%   {-webkit-transform: rotate(-45deg);}
-  100% {-webkit-transform: rotate(720deg);}
+  0%   {
+    -ms-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  20%   {
+    -ms-transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+  }
+  100% {
+    -ms-transform: rotate(720deg);
+    -webkit-transform: rotate(720deg);
+    transform: rotate(720deg);
+  }
 }
 
 .srm-page-tagger-popout .srm-tagger-searching:before {

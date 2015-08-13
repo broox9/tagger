@@ -31,7 +31,7 @@
       this.inputBounds = _getInputBounds(this.el);
       this.paddingTotal = parseFloat(this.inputBounds.styles.paddingLeft) + parseFloat(this.inputBounds.styles.paddingRight);
       this.preRender();
-      this.setPosition();
+      //this.setPosition();
       //this.render();
 
       this.loaderElement = this.wrapper.querySelector('.srm-tagger-searching')
@@ -80,7 +80,7 @@
       // var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
       // console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
 
-      console.log("set position" , this.paddingTotal)
+      console.log("set position" , this.paddingTotal, typeof element)
       this.wrapper.style.top = this.el.offsetTop +  'px';
       this.wrapper.style.left = (this.el.offsetWidth + this.paddingTotal) + 'px';
       //this.show();
@@ -97,7 +97,7 @@
     },
 
     update: function (data, anchor) {
-      //this.setPosition(anchor.node)
+      this.setPosition(anchor.node)
       this.render(data);
       this.currentAnchor = anchor
     },
@@ -117,6 +117,13 @@
       $(this.loaderElement).removeClass('active')
     }
   });
+
+
+
+
+
+
+
 
 
 

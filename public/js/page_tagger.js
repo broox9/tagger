@@ -114,14 +114,13 @@ Concepts:
 
 
   var _keyup = function (evt) {
-    //console.log(evt.keyCode)
     var text = (!!evt.target.value)? evt.target.value : evt.target.textContent;
     var target = evt.target;
     var anchorMatches = text.match(_searchText);
     var taggedMatches = text.match(_taggedText);
 
     /* split the nodes. or set the ranges. Do this no matter what. */
-    if (evt.keyIdentifier === "U+0020") {
+    if (evt.keyIdentifier === "U+0020" || evt.keyCode === 32) {
       //if (this.isTextArea) { _setRanges.call(this, this.element); }
       if (this.isContentEditable) { _splitText.call(this, this.tree.root.textContent); }
     }
@@ -140,7 +139,7 @@ Concepts:
       this.popout.show();
 
       /* search set's the this.xhr object which is referenced below */
-      _search.call(this,this.currentAnchor.search);
+      _search.call(this, this.currentAnchor.search);
 
       var self = this;
       $.when( this.xhr ).then(function (data, status, jqXHR) {
@@ -161,17 +160,13 @@ Concepts:
   }
 
   var _search = function (str) {
-    console.dir(this.tree.root.firstChild);
     if (this.xhr) {  this.xhr.abort(); /*console.log("abort mission")*/}
     this.xhr = $.getJSON('/tagger', {q: str})
     return this.xhr;
   }
 
   var _splitText = function (text) {
-    var currentNode = _getCurrentNode();
-    var cursor = _getCurrentCursorOffset() - 1 ;
-
-    currentNode.splitText(cursor);
+    _getCurrentNode().splitText(_getCurrentCursorOffset() - 1);
     this.hideAll();
   }
 
@@ -241,11 +236,11 @@ Concepts:
   }
 
   var _getCurrentCursorOffset = function () {
-    return window.getSelection().focusOffset;
+    return window.getSelection().anchorOffset;
   }
 
   var _getCurrentNode = function () {
-      return _getSelection().focusNode;
+      return _getSelection().anchorNode;
   }
 
   var _popoutCallback = function (pageID, anchor, text, index) {
