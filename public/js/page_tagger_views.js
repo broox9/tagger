@@ -31,8 +31,8 @@
       this.inputBounds = _getInputBounds(this.el);
       this.paddingTotal = parseFloat(this.inputBounds.styles.paddingLeft) + parseFloat(this.inputBounds.styles.paddingRight);
       this.preRender();
-      //this.setPosition();
-      //this.render();
+      // this.render();
+      console.log("font-size", this.inputBounds.styles.fontSize)
 
       this.loaderElement = this.wrapper.querySelector('.srm-tagger-searching')
     },
@@ -65,29 +65,35 @@
       }
 
       this.resultsList.innerHTML = html;
-      this.show();
       return this;
     },
 
     setPosition: function (element) {
-      // var range = document.createRange();
-      // range.selectNode(element);
-      // var bounds = range.getClientRects()[0];
-      // var el_bound = element.getBoundingClientRect();
-      // var top = this.inputBounds.top; //+ element.offsetTop + element.offsetHeight; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
-      //
-      // //this.el.style.display = 'inline-block';
-      // var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
-      // console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
+      // console.log('set position', element instanceof Text, typeof element, element)
+      if (element instanceof Text) {
+        this.setPositionOfTextNode(element);
+        return;
+      }
 
-      console.log("set position" , this.paddingTotal, typeof element)
-      this.wrapper.style.top = this.el.offsetTop +  'px';
-      this.wrapper.style.left = (this.el.offsetWidth + this.paddingTotal) + 'px';
-      //this.show();
+      var el_pos = $(element).position();
+      var fontSize = parseInt(this.inputBounds.styles.fontSize)
+      console.log(fontSize, el_pos.top, el_pos.left, this.el.offsetTop,  element.offsetHeight, fontSize, element.clientHeight);
+
+      this.wrapper.style.top = (el_pos.top + this.el.offsetTop  + element.offsetHeight, this.el.clientHeight) + 'px';
+      this.wrapper.style.left = (el_pos.left + element.offsetWidth + fontSize) + 'px';
+
     },
 
-    show: function () {
+    setPositionOfTextNode: function (node) {
+      var range = document.createRange();
+      range.selectNode(node);
+      var bounds = range.getBoundingClientRect();
+      console.log("node bounds", bounds, node.parentElement);
+    },
+
+    show: function (node) {
       this.isActive = true;
+      this.setPosition(node);
       $(this.wrapper).addClass('active');
     },
 
@@ -98,8 +104,8 @@
 
     update: function (data, anchor) {
       this.setPosition(anchor.node)
+      this.currentAnchor = anchor;
       this.render(data);
-      this.currentAnchor = anchor
     },
 
     handleSelectTag: function (evt) {

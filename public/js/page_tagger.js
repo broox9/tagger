@@ -13,6 +13,7 @@ Concepts:
 
  */
 
+/* TODO: make a content editable object and a text area object and abstract the comment funcitons */
 
 /* ===================== Controller MODULE ================================== */
 (function (exports, Views, $) {
@@ -127,7 +128,7 @@ Concepts:
 
     if (!anchorMatches && !taggedMatches)  {return}
 
-    this.blockKeyUp(true);
+    //this.blockKeyUp(true);
     if (this.isContentEditable) { _setAnchors.call(this); }
 
     /*
@@ -135,8 +136,8 @@ Concepts:
       if it crossed out of one it will hide the popup/tooltip
     */
     if (this.currentAnchor) {
+      this.popout.show(this.currentAnchor.node);
       this.popout.showLoading();
-      this.popout.show();
 
       /* search set's the this.xhr object which is referenced below */
       _search.call(this, this.currentAnchor.search);
@@ -156,7 +157,7 @@ Concepts:
     } else {
       this.tooltip.hide();
     }
-    this.blockKeyUp(false);
+    //this.blockKeyUp(false);
   }
 
   var _search = function (str) {
@@ -185,7 +186,7 @@ Concepts:
       }
       this.currentTag = null;
 
-      var search_text = (current_text)? current_text.replace(/\s@/, '') : '';
+      var search_text = (current_text)? current_text.replace(/\s*?@/, '') : '';
       var isAnchor = _searchText.test(current_text);
       var isAnchorSet = (!!prev_node && !!prev_node.tagName && prev_node.tagName.toLowerCase() == 'span' && (prev_node.className.indexOf(anchorClassName) > -1))
       var currentIsFocus = current_node.isEqualNode(window.getSelection().focusNode);
