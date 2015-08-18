@@ -18,6 +18,26 @@ Concepts:
 /* ===================== Controller MODULE ================================== */
 (function (exports, Views, $) {
   'use-strict';
+  Text.prototype.forceSplitText = function (place) {
+
+    this.data += " ";
+    var range = document.createRange();
+    var selection = _getSelection();
+    range.setStart(this,  place);
+    range.setEnd(this,  place);
+
+    var newNode = document.createTextNode('\u00A0');
+    // range.setStart(this, this.data.length);
+    // range.setEnd(this, this.data.length);
+    range.setStart(this, place)
+    range.insertNode(newNode);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+    console.log(this, range, selection)
+    //this.parentElement.insertBefore(newNode, splitNode)
+  }
+
 
   var anchorClassName = 'srm-page-tagger-anchor';
   var taggedClassName ="srm-tagged-page";
@@ -167,7 +187,8 @@ Concepts:
   }
 
   var _splitText = function (text) {
-    _getCurrentNode().splitText(_getCurrentCursorOffset() - 1);
+    //_getCurrentNode().forceSplitText(_getCurrentCursorOffset());
+    _getCurrentNode().splitText(_getCurrentCursorOffset() -1);
     this.hideAll();
   }
 
@@ -257,8 +278,7 @@ Concepts:
 
   /* = Exports & Initialize ------------------------------------------------- */
   exports.init = function (context, watchElement, outputElement) {
-    var pageTagger = new _fbPageTaggerConstructor(watchElement, outputElement);
-    return pageTagger;
+    return new _fbPageTaggerConstructor(watchElement, outputElement);
   }
 
   return exports;
