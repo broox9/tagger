@@ -11,6 +11,10 @@ Concepts:
   - tagged: @[123456789] facebook mention page ID's.
   - both have a seperate cache.  When a page is tagged the anchor that was associated with it is deleted
 
+
+SampleURL:
+http://localhost:3000/api/v1/mentions?mention_type=page&stream_type=facebook&name=ab&bundle_id=123123123&user_id=12436
+
  */
 
 
@@ -37,9 +41,10 @@ Concepts:
 
     this.tempCache = {}; //Object.create(null);
     this.taggedCache = {}
+    this.rangeCache = {};
 
     this.anchorCount = 0;
-    this.currentAnchor;
+    this.currentRange;
     this.currentTag;
     this.element = watchElement;
 
@@ -52,7 +57,7 @@ Concepts:
 
     /* different things for Content Editable */
     if (this.isContentEditable) {
-      if (!positioning) {watchElement.style.position = 'relative';}
+      // if (!positioning) {watchElement.style.position = 'relative';}
       this.element.addEventListener('keydown', boundKeyDown, false); //primarily to prevent <div> tags on Enter
       this.tree = document.createTreeWalker(watchElement, NodeFilter.SHOW_TEXT, null, false);
     }
@@ -122,28 +127,30 @@ Concepts:
     /* split the nodes. or set the ranges. Do this no matter what. */
     if (evt.keyIdentifier === "U+0020" || evt.keyCode === 32) {
       //if (this.isTextArea) { _setRanges.call(this, this.element); }
-      if (this.isContentEditable) { _splitText.call(this, this.tree.root.textContent); }
+      //if (this.isContentEditable) { _splitText.call(this, this.tree.root.textContent); }
+      //this.popout.hide();
     }
 
     if (!anchorMatches && !taggedMatches)  {return}
 
     this.blockKeyUp(true);
-    if (this.isContentEditable) { _setAnchors.call(this); }
+    //if (this.isContentEditable) { _setAnchors.call(this); }
+    _checkSearchRanges.call(this, anchorMatches)
 
     /*
       if the cursor is inside an anchor or tag, the popup/tooltip will show up.
       if it crossed out of one it will hide the popup/tooltip
     */
-    if (this.currentAnchor) {
+    if (this.currentRange) {
       this.popout.showLoading();
-      this.popout.show();
+      this.popout.show(this.currentRange);
 
       /* search set's the this.xhr object which is referenced below */
-      _search.call(this, this.currentAnchor.search);
+      _search.call(this, this.currentRange.search);
 
       var self = this;
       $.when( this.xhr ).then(function (data, status, jqXHR) {
-        self.popout.update(data, self.currentAnchor);
+        self.popout.update(data, self.currentRange);
         self.popout.hideLoading();
       });
 
@@ -170,56 +177,91 @@ Concepts:
     this.hideAll();
   }
 
-  //for contentEditable
-  var _setAnchors = function () {
-      //isAnchorSet: if the previous node is a <span> of a specific type. I may change to <em>
-      var cursor = _getCurrentCursorOffset();
-      var current_node = _getCurrentNode();
-      var prev_node = current_node.previousSibling;
-      var current_text = current_node.nodeValue;
+  var _checkSearchRanges = function (matches) {
+    var selection = _getSelection();
+    if (!selection.isCollapsed) {return}
+    //console.log("keyup selection", selection, matches) //maybe selection.type = "Caret" also
 
-      if(_taggedText.test(current_text)) {
-        this.currentAnchor = null;
-        _setTagAnchor.call(this, current_text);
-        return;
-      }
-      this.currentTag = null;
+    var element = (this.tree) ? this.tree.root : this.element;
+    var text = (this.tree) ? this.tree.root.textContent : this.element.value;
 
-      var search_text = (current_text)? current_text.replace(/\s@/, '') : '';
-      var isAnchor = _searchText.test(current_text);
-      var isAnchorSet = (!!prev_node && !!prev_node.tagName && prev_node.tagName.toLowerCase() == 'span' && (prev_node.className.indexOf(anchorClassName) > -1))
-      var currentIsFocus = current_node.isEqualNode(window.getSelection().focusNode);
-      var currentIsParent =  current_node.isEqualNode(this.element);
+    var currentlyInRange = false;
+    matches.forEach(function (match, index) {
+      var start = text.indexOf(match);
+      var end = start + match.length;
+      var currentOffset = (typeof element.selectionStart !== "undefined")? element.selectionStart : selection.anchorOffset;
+      var identifier = "_" + index;
 
-      //create an empty span and insert it before the @ symbol
-      if (currentIsFocus && isAnchor && !currentIsParent && !isAnchorSet) {
-        var span = document.createElement('span');
-        var anchorId = "srm-anchor-" + (++this.anchorCount);
-
-        span.className = anchorClassName;
-        span.setAttribute('data', anchorId);
-
-        this.element.insertBefore(span, current_node);
-        this.tempCache[anchorId] = {
-          node: span,
-          search: search_text,
-          identifier: anchorId
-        };
-
-        this.currentAnchor = this.tempCache[anchorId];
+      if (!this.rangeCache.hasOwnProperty(identifier)) {
+        this.rangeCache[identifier] = {};
       }
 
-      //for editing an existing search
-      if (isAnchor && isAnchorSet) {
-        var retrievedAnchorId = prev_node.getAttribute('data');
-        this.tempCache[retrievedAnchorId].search = search_text;
-        this.currentAnchor = this.tempCache[retrievedAnchorId];
+      this.rangeCache[identifier].search = match.replace('@', '');
+
+      if (currentOffset > start && currentOffset <= end  ) {
+        this.currentRange = this.rangeCache[identifier];
+
+        if (!this.rangeCache[identifier].position) {
+          this.rangeCache[identifier].position = $(element).caret('position');
+          this.rangeCache[identifier].offset = $(element).caret('offset');
+        }
+      } else if (!currentlyInRange) {
+          this.currentRange = null;
       }
 
-      if (!isAnchor) {
-        this.currentAnchor = null;
-      }
+    }, this);
   }
+
+  //for contentEditable
+  // var _setAnchors = function () {
+  //     //isAnchorSet: if the previous node is a <span> of a specific type. I may change to <em>
+  //     var cursor = _getCurrentCursorOffset();
+  //     var current_node = _getCurrentNode();
+  //     var prev_node = current_node.previousSibling;
+  //     var current_text = current_node.nodeValue;
+  //
+  //     if(_taggedText.test(current_text)) {
+  //       this.currentRange = null;
+  //       _setTagAnchor.call(this, current_text);
+  //       return;
+  //     }
+  //     this.currentTag = null;
+  //
+  //     var search_text = (current_text)? current_text.replace(/\s@/, '') : '';
+  //     var isAnchor = _searchText.test(current_text);
+  //     var isAnchorSet = (!!prev_node && !!prev_node.tagName && prev_node.tagName.toLowerCase() == 'span' && (prev_node.className.indexOf(anchorClassName) > -1))
+  //     var currentIsFocus = current_node.isEqualNode(window.getSelection().focusNode);
+  //     var currentIsParent =  current_node.isEqualNode(this.element);
+  //
+  //     //create an empty span and insert it before the @ symbol
+  //     if (currentIsFocus && isAnchor && !currentIsParent && !isAnchorSet) {
+  //       var span = document.createElement('span');
+  //       var anchorId = "srm-anchor-" + (++this.anchorCount);
+  //
+  //       span.className = anchorClassName;
+  //       span.setAttribute('data', anchorId);
+  //
+  //       this.element.insertBefore(span, current_node);
+  //       this.tempCache[anchorId] = {
+  //         node: span,
+  //         search: search_text,
+  //         identifier: anchorId
+  //       };
+  //
+  //       this.currentAnchor = this.tempCache[anchorId];
+  //     }
+  //
+  //     //for editing an existing search
+  //     if (isAnchor && isAnchorSet) {
+  //       var retrievedAnchorId = prev_node.getAttribute('data');
+  //       this.tempCache[retrievedAnchorId].search = search_text;
+  //       this.currentAnchor = this.tempCache[retrievedAnchorId];
+  //     }
+  //
+  //     if (!isAnchor) {
+  //       this.currentAnchor = null;
+  //     }
+  // }
 
   //for textarea
   // var _setRanges = function (element) {

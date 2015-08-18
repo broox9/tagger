@@ -31,8 +31,6 @@
       this.inputBounds = _getInputBounds(this.el);
       this.paddingTotal = parseFloat(this.inputBounds.styles.paddingLeft) + parseFloat(this.inputBounds.styles.paddingRight);
       this.preRender();
-      //this.setPosition();
-      //this.render();
 
       this.loaderElement = this.wrapper.querySelector('.srm-tagger-searching')
     },
@@ -69,26 +67,24 @@
       return this;
     },
 
-    setPosition: function (element) {
-      // var range = document.createRange();
-      // range.selectNode(element);
-      // var bounds = range.getClientRects()[0];
-      // var el_bound = element.getBoundingClientRect();
-      // var top = this.inputBounds.top; //+ element.offsetTop + element.offsetHeight; //(this.inputBounds.top + element.offsetTop + element.offsetHeight + 3);
-      //
-      // //this.el.style.display = 'inline-block';
-      // var left = this.inputBounds.width; //element.offsetLeft + this.inputBounds.width; //(element.offsetLeft)
-      // console.log("EL Bound", this.el.offsetWidth,  this.el.style.paddingLeft)
+    setPosition: function (anchor) {
+      console.log('setting ', anchor)
+      // this.wrapper.style.top = ((anchor.offset.top - this.el.offsetTop) + (anchor.offset.height * 2) + parseFloat(this.inputBounds.styles.paddingTop)) +  'px';
+      var isTextarea = this.el.tagName.toLowerCase() == 'textarea';
+      var top = (isTextarea)? ((anchor.offset.top - this.el.offsetTop) + (anchor.offset.height * 2) + parseFloat(this.inputBounds.styles.paddingTop)) : (this.el.offsetTop + anchor.offset.height + 3)
 
-      console.log("set position" , this.paddingTotal, typeof element)
-      this.wrapper.style.top = this.el.offsetTop +  'px';
-      this.wrapper.style.left = (this.el.offsetWidth + this.paddingTotal) + 'px';
-      //this.show();
+      var left = (isTextarea)? (anchor.position.left - anchor.offset.height) : (anchor.offset.left + this.el.offsetLeft)
+
+      this.wrapper.style.top = top +'px';
+      this.wrapper.style.left = left + 'px';
     },
 
-    show: function () {
-      this.isActive = true;
+    show: function (anchor) {
+      if (anchor) {
+        this.setPosition(anchor)
+      }
       $(this.wrapper).addClass('active');
+      this.isActive = true;
     },
 
     hide: function () {
@@ -97,9 +93,12 @@
     },
 
     update: function (data, anchor) {
-      this.setPosition(anchor.node)
+      if (!this.isActive) {
+        this.setPosition(anchor)
+      }
+      this.setPosition(anchor)
       this.render(data);
-      this.currentAnchor = anchor
+      this.currentAnchor = anchor;
     },
 
     handleSelectTag: function (evt) {
